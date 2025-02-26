@@ -1,12 +1,15 @@
 //@version=5
-indicator(title="Global Money Supply, Pablo", shorttitle="MF Global M2 by MigueFinance", overlay=true) // Changed overlay to true
+indicator(title="MF Global Money Supply M2 by MigueFinance", shorttitle="MF Global M2 by MigueFinance", overlay=true)
 
 // Includes the most rich and most populated countries that have data till at least 2008 and with lest abrupt currency exchang anomalies
 // it is possible to chart directly most of the global m2 also directly by typting: ECONOMICS:USM2+ECONOMICS:CNM2*FX_IDC:CNYUSD+ECONOMICS:INM2*FX_IDC:INRUSD+ECONOMICS:EUM2*FX:EURUSD+ECONOMICS:JPM2*FX_IDC:JPYUSD
 
 labels_condition = input(true, "Label")
-offset = input.int(0, "Future Offset (Bars)", minval=-500, maxval=500) // Added offset parameter
-scale_factor = input.float(1.0, "Scale Factor", minval=0.0001, step=0.0001) // Added scale factor to help with overlay visibility
+offset = input.int(0, "Future Offset (Bars)", minval=-500, maxval=500)
+use_percentage = input(true, "Use Percentage Scale (0-235%)")
+base_price = input.float(1000, "Base Price for Percentage Calculation", tooltip="Set this to your BTC price reference point where M2 should be 100%")
+max_percentage = input.float(235, "Maximum Percentage Value", minval=100, maxval=1000)
+custom_scale = input.float(0.0001, "Custom Scale Factor (if not using percentage)", minval=0.0000001, step=0.0000001)
 
 //EUROZONE
 EUM2D=request.security("ECONOMICS:EUM2*FX:EURUSD", timeframe.period, close)
@@ -58,14 +61,44 @@ TRM2D=request.security("ECONOMICS:TRM2*FX_IDC:TRYUSD", timeframe.period, close) 
 //TZM2D=request.security("ECONOMICS:TZM2*FX_IDC:TZSUSD", timeframe.period, close)   //tanzania exchange chart has problems
 ZAM2D=request.security("ECONOMICS:ZAM2*FX_IDC:ZARUSD", timeframe.period, close)   //2007 south africa
 
+// Calculate total M2 in USD
 GLM2 = EUM2D+USM2D+CAM2D+CHM2D+GBM2D+FIPOP+RUM2D+NZM2D+CNM2D+TWM2D+HKM2D+INM2D+JPM2D+PHM2D+SGM2D+BRM2D+COM2D+MXM2D+AEM2D+TRM2D+ZAM2D
 
-scaled_GLM2 = GLM2 * scale_factor
+// Get the first value for reference (to calculate percentage change from start)
+var float reference_value = na
+if (bar_index == 0)
+    reference_value := GLM2
+
+// Scale the value according to selected method
+float scaled_value = na
+if use_percentage
+    // Calculate as percentage of reference value, scaled to max_percentage
+    float pct_of_ref = (GLM2 / reference_value) * 100
+    scaled_value := (pct_of_ref * base_price) / 100
+    // Cap at max percentage if needed
+    if (pct_of_ref > max_percentage)
+        scaled_value := (max_percentage * base_price) / 100
+else
+    // Use custom scale factor
+    scaled_value := GLM2 * custom_scale
 
 // Plot with offset
-plot(scaled_GLM2, color=color.blue, title="Global (World) Money Supply M2", linewidth=2, offset=offset)
+plot(scaled_value, color=color.blue, title="Global (World) Money Supply M2", linewidth=2, offset=offset)
+
+// Calculate trillions for display
+float m2_in_trillions = GLM2 / 1000000000000
+
+// Calculate percentage for display
+float pct_of_initial = (GLM2 / reference_value) * 100
 
 if labels_condition and barstate.islast
-    label_offset_pos = bar_index + offset + 10  // Adjusted to account for the offset
-    label.new(label_offset_pos, scaled_GLM2, text= "Global M2: "+str.tostring(math.round(GLM2/1000000000000,2))+"T", 
-              color=color.blue, textcolor=color.white, style=label.style_label_left)
+    label_offset_pos = bar_index + offset + 10
+    if use_percentage
+        label.new(label_offset_pos, scaled_value, 
+                 text="Global M2: " + str.tostring(math.round(m2_in_trillions, 2)) + "T (" + 
+                      str.tostring(math.round(pct_of_initial, 1)) + "%)", 
+                 color=color.blue, textcolor=color.white, style=label.style_label_left)
+    else
+        label.new(label_offset_pos, scaled_value, 
+                 text="Global M2: " + str.tostring(math.round(m2_in_trillions, 2)) + "T", 
+                 color=color.blue, textcolor=color.white, style=label.style_label_left)
