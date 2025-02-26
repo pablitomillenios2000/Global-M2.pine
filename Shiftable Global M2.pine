@@ -1,8 +1,12 @@
 //@version=5
 indicator(title="MF Global Money Supply M2 by MigueFinance", shorttitle="MF Global M2 by MigueFinance", overlay=true)
 
-// Includes the most rich and most populated countries that have data till at least 2008 and with lest abrupt currency exchang anomalies
-// it is possible to chart directly most of the global m2 also directly by typting: ECONOMICS:USM2+ECONOMICS:CNM2*FX_IDC:CNYUSD+ECONOMICS:INM2*FX_IDC:INRUSD+ECONOMICS:EUM2*FX:EURUSD+ECONOMICS:JPM2*FX_IDC:JPYUSD
+// Includes the most rich and most populated countries that have data 
+// till at least 2008 and with lest abrupt currency exchang anomalies
+// it is possible to chart directly most of the global m2 
+// also directly by typting: 
+// ECONOMICS:USM2+ECONOMICS:CNM2*FX_IDC:CNYUSD+ECONOMICS:INM2*FX_IDC:INRUSD
+// +ECONOMICS:EUM2*FX:EURUSD+ECONOMICS:JPM2*FX_IDC:JPYUSD
 
 labels_condition = input(true, "Label")
 offset = input.int(0, "Future Offset (Bars)", minval=-500, maxval=500)
