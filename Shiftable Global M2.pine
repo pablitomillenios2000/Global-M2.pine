@@ -1,5 +1,5 @@
 //@version=5
-indicator(title="MF Global Money Supply M2 by MigueFinance", shorttitle="MF Global M2 by MigueFinance", overlay=true)
+indicator(title="MF Global Money Supply M2 by Pablo", shorttitle="MF Global M2 by Pablo", overlay=true)
 
 // Includes the most rich and most populated countries that have data 
 // till at least 2008 and with lest abrupt currency exchang anomalies
