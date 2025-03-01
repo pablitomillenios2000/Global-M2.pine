@@ -1,0 +1,46 @@
+//@version=5
+indicator(title="MF Global Money Supply M2 by Pablo (Daily M2 Data)", shorttitle="MF Global M2 by Pablo")
+labels_condition = input(true, "Label") 
+offset = input.int(0, "Future Offset (Bars)", minval=-500, maxval=500)
+use_percentage = input(true, "Use Percentage Scale (0-235%)")
+base_price = input.float(1000, "Base Price for Percentage Calculation", tooltip="Set this to your BTC price reference point where M2 should be 100%")
+max_percentage = input.float(235, "Maximum Percentage Value", minval=100, maxval=1000)
+custom_scale = input.float(0.0001, "Custom Scale Factor (if not using percentage)", minval=0.0000001, step=0.0000001)
+
+// Request Daily Data for M2:
+EUM2D = request.security("ECONOMICS:EUM2*FX:EURUSD", "D", close)
+USM2D = request.security("ECONOMICS:USM2", "D", close)
+CAM2D = request.security("ECONOMICS:CAM2*FX_IDC:CADUSD", "D", close)
+CHM2D = request.security("ECONOMICS:CHM2*FX_IDC:CHFUSD", "D", close)
+GBM2D = request.security("ECONOMICS:GBM2*FX_IDC:GBPUSD", "D", close)
+FIPOP = request.security("ECONOMICS:FIM2/FX_IDC:USDFIM", "D", close)
+RUM2D = request.security("ECONOMICS:RUM2*FX_IDC:RUBUSD", "D", close)
+NZM2D = request.security("ECONOMICS:NZM2*FX_IDC:NZDUSD", "D", close)
+CNM2D = request.security("ECONOMICS:CNM2*FX_IDC:CNYUSD", "D", close)
+TWM2D = request.security("ECONOMICS:TWM2*FX_IDC:TWDUSD", "D", close)
+HKM2D = request.security("ECONOMICS:HKM2*FX_IDC:HKDUSD", "D", close)
+INM2D = request.security("ECONOMICS:INM2*FX_IDC:INRUSD", "D", close)
+JPM2D = request.security("ECONOMICS:JPM2*FX_IDC:JPYUSD", "D", close)
+PHM2D = request.security("ECONOMICS:PHM2*FX_IDC:PHPUSD", "D", close)
+SGM2D = request.security("ECONOMICS:SGM2*FX_IDC:SGDUSD", "D", close)
+BRM2D = request.security("ECONOMICS:BRM2*FX_IDC:BRLUSD", "D", close)
+COM2D = request.security("ECONOMICS:COM2*FX_IDC:COPUSD", "D", close)
+MXM2D = request.security("ECONOMICS:MXM2*FX_IDC:MXNUSD", "D", close)
+AEM2D = request.security("ECONOMICS:AEM2*FX_IDC:AEDUSD", "D", close)
+TRM2D = request.security("ECONOMICS:TRM2*FX_IDC:TRYUSD", "D", close)
+ZAM2D = request.security("ECONOMICS:ZAM2*FX_IDC:ZARUSD", "D", close)
+
+// Total M2 in USD:
+GLM2 = EUM2D + USM2D + CAM2D + CHM2D + GBM2D + FIPOP + RUM2D + NZM2D + CNM2D + TWM2D + HKM2D + INM2D + JPM2D + PHM2D + SGM2D + BRM2D + COM2D + MXM2D + AEM2D + TRM2D + ZAM2D
+
+// Reference and scaling:
+var float reference_value = na
+reference_value := barstate.isfirst ? GLM2 : nz(reference_value)
+float pct_of_ref = use_percentage ? (GLM2 / reference_value) * 100 : na
+float scaled_value = use_percentage ? (pct_of_ref > max_percentage ? (max_percentage * base_price) / 100 : (pct_of_ref * base_price) / 100) : GLM2 * custom_scale
+plot(scaled_value, color=color.blue, title="Global (World) Money Supply M2", linewidth=2, offset=offset)
+float m2_in_trillions = GLM2 / 1000000000000
+float pct_of_initial = (GLM2 / reference_value) * 100
+if (labels_condition and barstate.islast) 
+    label.new(bar_index + offset + 10, scaled_value, use_percentage ? "Global M2: " + str.tostring(math.round(m2_in_trillions, 2)) + "T (" + str.tostring(math.round(pct_of_initial, 1)) + "%)" : "Global M2: " + str.tostring(math.round(m2_in_trillions, 2)) + "T", color=color.blue, textcolor=color.white, style=label.style_label_left)
+
